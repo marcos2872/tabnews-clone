@@ -1,27 +1,35 @@
-# Frontend
+# TabNews Clone - Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.17.
+Aplicação web desenvolvida em Angular 17+ com Tailwind CSS.
 
-## Development server
+## Pré-requisitos
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- **Node.js** e **npm** instalados.
+- **Angular CLI** (opcional, mas recomendado).
 
-## Code scaffolding
+## Instalação
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Instale as dependências do projeto:
 
-## Build
+```bash
+npm install
+```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Como Rodar
 
-## Running unit tests
+Inicie o servidor de desenvolvimento:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+```bash
+npm start
+```
+Ou se preferir o alias configurado:
+```bash
+npm run dev
+```
 
-## Running end-to-end tests
+Acesse a aplicação em `http://localhost:4200`.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Features
+- **Dark Mode**: Alternável via botão no menu.
+- **Markdown**: Suporte a renderização e preview de markdown.
+- **Auth**: Login persistente com JWT.
