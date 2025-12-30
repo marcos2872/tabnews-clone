@@ -4,22 +4,44 @@ import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { PostService, Post } from '../../core/services/post.service';
 import { AuthService } from '../../core/services/auth.service';
+import { marked } from 'marked';
 
 @Component({
-    selector: 'app-post-list',
-    standalone: true,
-    imports: [CommonModule, RouterLink, ReactiveFormsModule],
-    template: `
+  selector: 'app-post-list',
+  standalone: true,
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  template: `
     <div class="space-y-6">
       
       <!-- Create Post Form -->
       @if (auth.currentUser()) {
         <div class="bg-white p-4 rounded-lg shadow">
+           <div class="flex gap-2 mb-4 border-b">
+             <button type="button" (click)="isPreview = false" 
+                     [class.border-b-2]="!isPreview" [class.border-blue-600]="!isPreview"
+                     class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">
+               Escrever
+             </button>
+             <button type="button" (click)="togglePreview()" 
+                     [class.border-b-2]="isPreview" [class.border-blue-600]="isPreview"
+                     class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">
+               Preview
+             </button>
+           </div>
+
            <form [formGroup]="postForm" (ngSubmit)="createPost()" class="space-y-3">
-             <input type="text" formControlName="title" placeholder="Título da publicação" class="w-full p-2 border rounded-md">
-             <textarea formControlName="content" rows="3" placeholder="Conteúdo (Markdown suportado)" class="w-full p-2 border rounded-md text-sm"></textarea>
-             <div class="flex justify-end">
-               <button type="submit" [disabled]="postForm.invalid" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Publicar</button>
+             <div [class.hidden]="isPreview">
+                <input type="text" formControlName="title" placeholder="Título da publicação" class="w-full p-2 border rounded-md mb-2">
+                <textarea formControlName="content" rows="6" placeholder="Conteúdo (Markdown suportado)" class="w-full p-2 border rounded-md text-sm font-mono"></textarea>
+             </div>
+
+             <div *ngIf="isPreview" class="min-h-[150px] p-4 border rounded-md bg-gray-50 prose max-w-none">
+                <h3 *ngIf="postForm.value.title" class="text-xl font-bold mb-2">{{ postForm.value.title }}</h3>
+                <div [innerHTML]="previewContent"></div>
+             </div>
+
+             <div class="flex justify-end pt-2">
+               <button type="submit" [disabled]="postForm.invalid" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Publiicar</button>
              </div>
            </form>
         </div>
@@ -48,33 +70,42 @@ import { AuthService } from '../../core/services/auth.service';
   `
 })
 export class PostListComponent implements OnInit {
-    postService = inject(PostService);
-    auth = inject(AuthService);
-    fb = inject(FormBuilder);
+  postService = inject(PostService);
+  auth = inject(AuthService);
+  fb = inject(FormBuilder);
 
-    posts: Post[] = [];
+  posts: Post[] = [];
+  isPreview = false;
+  previewContent = '';
 
-    postForm = this.fb.group({
-        title: ['', Validators.required],
-        content: ['', Validators.required]
+  postForm = this.fb.group({
+    title: ['', Validators.required],
+    content: ['', Validators.required]
+  });
+
+  ngOnInit() {
+    this.loadPosts();
+  }
+
+  loadPosts() {
+    this.postService.getPosts().subscribe(posts => {
+      this.posts = posts;
     });
+  }
 
-    ngOnInit() {
+  async togglePreview() {
+    this.isPreview = true;
+    const content = this.postForm.value.content || '';
+    this.previewContent = await marked.parse(content);
+  }
+
+  createPost() {
+    if (this.postForm.valid) {
+      this.postService.createPost(this.postForm.value as any).subscribe(() => {
+        this.postForm.reset();
+        this.isPreview = false;
         this.loadPosts();
+      });
     }
-
-    loadPosts() {
-        this.postService.getPosts().subscribe(posts => {
-            this.posts = posts;
-        });
-    }
-
-    createPost() {
-        if (this.postForm.valid) {
-            this.postService.createPost(this.postForm.value as any).subscribe(() => {
-                this.postForm.reset();
-                this.loadPosts();
-            });
-        }
-    }
+  }
 }

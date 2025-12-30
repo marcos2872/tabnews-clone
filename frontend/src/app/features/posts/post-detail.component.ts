@@ -2,12 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { PostService, Post } from '../../core/services/post.service';
+import { marked } from 'marked';
 
 @Component({
-    selector: 'app-post-detail',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-post-detail',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     @if (post) {
       <div class="bg-white p-6 rounded-lg shadow-md">
         <div class="mb-4">
@@ -18,9 +19,8 @@ import { PostService, Post } from '../../core/services/post.service';
            </div>
         </div>
 
-        <div class="prose max-w-none border-t pt-4">
-           <!-- Ideally use a Markdown pipe here, for MVP just displaying text -->
-           <pre class="whitespace-pre-wrap font-sans text-gray-800">{{ post.content }}</pre>
+        <div class="prose max-w-none border-t pt-4" [innerHTML]="renderedContent">
+           <!-- Content rendered via innerHTML -->
         </div>
 
         <div class="mt-6 flex items-center gap-4 border-t pt-4">
@@ -38,26 +38,30 @@ import { PostService, Post } from '../../core/services/post.service';
   `
 })
 export class PostDetailComponent implements OnInit {
-    route = inject(ActivatedRoute);
-    postService = inject(PostService);
-    post: Post | null = null;
+  route = inject(ActivatedRoute);
+  postService = inject(PostService);
+  post: Post | null = null;
+  renderedContent = '';
 
-    ngOnInit() {
-        const id = this.route.snapshot.paramMap.get('id');
-        if (id) {
-            this.loadPost(id);
-        }
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.loadPost(id);
     }
+  }
 
-    loadPost(id: string) {
-        this.postService.getPost(id).subscribe(p => this.post = p);
-    }
+  loadPost(id: string) {
+    this.postService.getPost(id).subscribe(async p => {
+      this.post = p;
+      this.renderedContent = await marked.parse(p.content);
+    });
+  }
 
-    vote() {
-        if (this.post) {
-            this.postService.vote(this.post.id).subscribe(() => {
-                if (this.post) this.post.tabcoins++;
-            });
-        }
+  vote() {
+    if (this.post) {
+      this.postService.vote(this.post.id).subscribe(() => {
+        if (this.post) this.post.tabcoins++;
+      });
     }
+  }
 }
