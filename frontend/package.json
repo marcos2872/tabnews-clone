@@ -27,6 +27,7 @@
     "@angular-devkit/build-angular": "^17.3.17",
     "@angular/cli": "^17.3.17",
     "@angular/compiler-cli": "^17.3.0",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/jasmine": "~5.1.0",
     "@types/marked": "^5.0.2",
     "autoprefixer": "^10.4.23",
