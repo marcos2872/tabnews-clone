@@ -20,11 +20,13 @@ async fn main() {
     
     let pool = db::init_db(&database_url).await.expect("Failed to connect to database");
     
-    // Auto-migrate (simple way for MVP)
-    // Ideally we use sqlx-cli, but let's try to run the init script if tables don't exist?
-    // For MVP, we'll assume the user runs sqlx migrate run or manually executes init.sql
-    // But let's verify connection.
-    println!("Database connected.");
+    // Run Migrations
+    println!("Running migrations...");
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+    println!("Migrations executed successfully.");
 
     let app = Router::new()
         .route("/api/auth/register", post(handlers::register))
