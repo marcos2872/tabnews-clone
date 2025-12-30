@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 export interface User {
     username: string;
     token: string;
+    id: string; // Add ID for ownership checks
 }
 
 @Injectable({

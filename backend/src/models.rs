@@ -32,6 +32,7 @@ pub struct LoginUser {
 pub struct AuthResponse {
     pub token: String,
     pub username: String,
+    pub id: Uuid,
 }
 
 // POSTS

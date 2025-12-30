@@ -32,7 +32,7 @@ async fn main() {
         .route("/api/auth/register", post(handlers::register))
         .route("/api/auth/login", post(handlers::login))
         .route("/api/posts", post(handlers::create_post).get(handlers::list_posts))
-        .route("/api/posts/:id", get(handlers::get_post))
+        .route("/api/posts/:id", get(handlers::get_post).put(handlers::update_post).delete(handlers::delete_post))
         .route("/api/posts/:id/vote", post(handlers::vote_post))
         .layer(CorsLayer::permissive()) // Allow all CORS for MVP
         .with_state(pool);

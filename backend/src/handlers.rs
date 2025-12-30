@@ -32,6 +32,7 @@ pub async fn register(
     Ok(Json(AuthResponse {
         token,
         username: user.username,
+        id: user.id,
     }))
 }
 
@@ -55,6 +56,7 @@ pub async fn login(
     Ok(Json(AuthResponse {
         token,
         username: user.username,
+        id: user.id,
     }))
 }
 
@@ -140,4 +142,67 @@ pub async fn vote_post(
     // ...
 
     Ok(StatusCode::OK)
+}
+
+#[derive(serde::Deserialize)]
+pub struct UpdatePost {
+    pub title: Option<String>,
+    pub content: String,
+}
+
+pub async fn update_post(
+    State(pool): State<DbPool>,
+    AuthUser { user_id }: AuthUser,
+    Path(post_id): Path<Uuid>,
+    Json(payload): Json<UpdatePost>,
+) -> Result<Json<Post>, (StatusCode, String)> {
+    // Check ownership
+    let post = sqlx::query_as::<_, Post>("SELECT * FROM posts WHERE id = $1")
+        .bind(post_id)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Post not found".to_string()))?;
+
+    if post.user_id != user_id {
+        return Err((StatusCode::FORBIDDEN, "You do not own this post".to_string()));
+    }
+
+    let updated = sqlx::query_as::<_, Post>(
+        "UPDATE posts SET title = COALESCE($1, title), content = $2 WHERE id = $3 RETURNING *"
+    )
+    .bind(payload.title)
+    .bind(payload.content)
+    .bind(post_id)
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(updated))
+}
+
+pub async fn delete_post(
+    State(pool): State<DbPool>,
+    AuthUser { user_id }: AuthUser,
+    Path(post_id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+     // Check ownership
+    let post = sqlx::query_as::<_, Post>("SELECT * FROM posts WHERE id = $1")
+        .bind(post_id)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Post not found".to_string()))?;
+
+    if post.user_id != user_id {
+        return Err((StatusCode::FORBIDDEN, "You do not own this post".to_string()));
+    }
+
+    sqlx::query("DELETE FROM posts WHERE id = $1")
+        .bind(post_id)
+        .execute(&pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(StatusCode::NO_CONTENT)
 }
